@@ -267,7 +267,10 @@ Result<std::vector<unsigned char>> parse(std::deque<Token> tokens, bool show_lab
                                         res.exceptions.push_back(Exception(9, ", at file '"+filename+"' line "+std::to_string(line)));
                                         while(tokens.size() > 0 && tokens.front().type != NEWLINE)tokens.pop_front();
                                     }
-                                    else if(tokens.front().type != NEWLINE)
+                                    
+                                    tokens.pop_front();
+
+                                    if(tokens.front().type != NEWLINE)
                                     {
                                         res.exceptions.push_back(Exception(6, ", found at file '"+filename+"' line "+std::to_string(line)));
                                         while(tokens.size() > 0 && tokens.front().type != NEWLINE)tokens.pop_front();
@@ -278,43 +281,31 @@ Result<std::vector<unsigned char>> parse(std::deque<Token> tokens, bool show_lab
                                 {
                                     mode = MODE_MASK(INDEXED_MODE);
                                     code.push_back((OPERATOR_SHIFT(opcode) | MODE_SHIFT(mode) | reg));
-                                    // tokens.pop_front();
+                                    
+                                    reg = REGISTER_MASK(tokens.front().value);
+                                    tokens.pop_front();
 
-                                    if(tokens.front().type == REGISTER)
+                                    if(tokens.front().type == PLUS)
                                     {
-                                        reg = REGISTER_MASK(tokens.front().value);
                                         tokens.pop_front();
 
-                                        if(tokens.front().type == PLUS)
+                                        if(tokens.front().type == NUMERICLITERAL)
                                         {
+                                            data = IDX_DATA_MASK(tokens.front().value);
+                                            code.push_back(IDX_REG_SHIFT(reg) | data);
                                             tokens.pop_front();
-
-                                            if(tokens.front().type == NUMERICLITERAL)
+                                        }
+                                        else if(tokens.front().type == LABEL)
+                                        {
+                                            if(symbols.find(tokens.front().name) != symbols.end())
                                             {
-                                                data = IDX_DATA_MASK(tokens.front().value);
+                                                data = IDX_DATA_MASK(symbols[tokens.front().name]);
                                                 code.push_back(IDX_REG_SHIFT(reg) | data);
                                                 tokens.pop_front();
                                             }
-                                            else if(tokens.front().type == LABEL)
-                                            {
-                                                if(symbols.find(tokens.front().name) != symbols.end())
-                                                {
-                                                    data = IDX_DATA_MASK(symbols[tokens.front().name]);
-                                                    // data = IDX_DATA_MASK(tokens.front().value);
-                                                    code.push_back(IDX_REG_SHIFT(reg) | data);
-                                                    tokens.pop_front();
-                                                    // code.push_back((unsigned char)data);
-                                                    // tokens.pop_front();
-                                                }
-                                                else
-                                                {
-                                                    res.exceptions.push_back(Exception(8, ", found at file '"+filename+"' line "+std::to_string(line)));
-                                                    while(tokens.size() > 0 && tokens.front().type != NEWLINE)tokens.pop_front();
-                                                }
-                                            }
                                             else
                                             {
-                                                res.exceptions.push_back(Exception(6, ", found at file '"+filename+"' line "+std::to_string(line)));
+                                                res.exceptions.push_back(Exception(8, ", found at file '"+filename+"' line "+std::to_string(line)));
                                                 while(tokens.size() > 0 && tokens.front().type != NEWLINE)tokens.pop_front();
                                             }
                                         }
