@@ -118,6 +118,7 @@ Result<std::deque<Token>> tokenize(std::string srcCode, std::string filename)
         switch(srcCode[index])
         {
             case ' ': // Ignora espaços e tabulações
+            case '\r': // carriage return
             case '\t':
             {
                 index++;
